@@ -1,0 +1,10 @@
+.idea/
+.env
+*.env
+secrets/
+config/local.*
+.vscode/settings.json
+.VSCodeCounter
+AIGateway/__pycache__
+AIService/__pycache__
+ContentService/__pycache__

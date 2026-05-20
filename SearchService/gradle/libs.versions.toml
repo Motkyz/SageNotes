@@ -1,0 +1,13 @@
+[versions]
+kotlin = "2.3.21"
+logback = "1.5.21"
+
+[libraries]
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+ucasoft-ktorSimpleCache = { module = "com.ucasoft.ktor:ktor-simple-cache", version = "0.59.4" }
+ucasoft-ktorSimpleRedisCache = { module = "com.ucasoft.ktor:ktor-simple-redis-cache", version = "0.59.4" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: OCRService
+  datasource:
+    url: jdbc:postgresql://postgres_ocr:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
