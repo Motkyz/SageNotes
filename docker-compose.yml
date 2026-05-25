@@ -132,7 +132,7 @@ services:
   content-service:
     build: ./ContentService
     env_file:
-      - ".env"
+      - .env
     environment:
       TEMPORAL_HOST: http://temporal:7233
     ports:
@@ -211,7 +211,7 @@ services:
     ports:
       - "6379:6379"
     env_file:
-      - ContentService/.env
+      - .env
     command: >
       redis-server 
       --requirepass "${REDIS_PASSWORD}"
