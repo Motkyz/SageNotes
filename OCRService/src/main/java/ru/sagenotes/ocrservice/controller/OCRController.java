@@ -2,7 +2,6 @@ package ru.sagenotes.ocrservice.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.sagenotes.ocrservice.dto.OCRRequestListDTO;
 import ru.sagenotes.ocrservice.dto.OCRResponseDTO;
@@ -17,7 +16,7 @@ public class OCRController {
     private final OCRService ocrService;
 
     @PostMapping("/upload")
-    public OCRResponseListDTO handleFileUpload(@Valid @ModelAttribute OCRRequestListDTO dto) {
+    public OCRResponseListDTO handleFileUpload(@Valid @RequestBody OCRRequestListDTO dto) {
         return ocrService.process(dto);
     }
 

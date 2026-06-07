@@ -11,6 +11,7 @@ public class OCRRequestListDTO {
 
     @NotNull
     private String noteId;
+
     @Valid
     private List<OCRRequestDTO> files;
 }

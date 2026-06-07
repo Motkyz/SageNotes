@@ -7,6 +7,6 @@ import ru.sagenotes.ocrservice.dto.OCRResponseListDTO;
 public interface OCRService {
 
     OCRResponseListDTO process(OCRRequestListDTO dto);
-    void createOCRModel(String fid, String text, String noteId);
+    void saveOCR(String fid, String text, String noteId);
     OCRResponseDTO getOCR(String fid);
 }
