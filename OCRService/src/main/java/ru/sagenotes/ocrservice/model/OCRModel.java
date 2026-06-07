@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -14,11 +16,11 @@ public class OCRModel {
 
     @Getter
     @Id
-    private String fid;
+    private UUID fid;
     @Getter
     @Column(columnDefinition = "TEXT")
     private String text;
     @Getter
-    private String noteId;
+    private UUID noteId;
 
 }

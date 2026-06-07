@@ -22,13 +22,16 @@ public class S3Config {
     @Value("${s3.secret-key}")
     private String secretKey;
 
+    @Value("${s3.region}")
+    private Region region;
+
     @Bean
     public S3Client s3Client() {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
 
         return S3Client.builder()
                 .endpointOverride(URI.create(s3Endpoint))
-                .region(Region.US_EAST_1)
+                .region(region)
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .forcePathStyle(true)
                 .build();

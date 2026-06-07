@@ -12,8 +12,10 @@ import ru.sagenotes.ocrservice.model.OCRModel;
 import ru.sagenotes.ocrservice.repository.OCRRepository;
 import ru.sagenotes.ocrservice.service.OCRService;
 import ru.sagenotes.ocrservice.util.OCRProcessor;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +40,6 @@ public class OCRServiceImpl implements OCRService {
     @Override
     public OCRResponseListDTO process(OCRRequestListDTO dto) {
         String noteId = dto.getNoteId();
-
         List<OCRResponseDTO> files = new ArrayList<>();
 
         for (OCRRequestDTO fileInfo : dto.getFiles()) {
@@ -46,11 +48,11 @@ public class OCRServiceImpl implements OCRService {
                 String url = fileInfo.getFileUrl();
 
                 File file = downloadFromS3(url);
-                String extractedText = processFile(file);
+
+                String extractedText = processFile(file, url);
                 OCRResponseDTO resp = new OCRResponseDTO(fid, extractedText);
 
                 saveOCR(fid, extractedText, noteId);
-
                 files.add(resp);
             } catch (Exception e) {
                 log.error("Ошибка при обработке файла в OCR сервисе: {}", e.getMessage(), e);
@@ -60,31 +62,30 @@ public class OCRServiceImpl implements OCRService {
         return new OCRResponseListDTO(noteId, files);
     }
 
-    public String processFile(File tempFile) {
+    public String processFile(File tempFile, String originalUrl) {
         if (tempFile == null || !tempFile.exists()) {
             return null;
         }
 
         try {
-            String originalFilename = tempFile.getName();
-
-            String suffix = ".tmp";
-            if (originalFilename.contains(".")) {
-                suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
+            String lowerUrl = originalUrl.toLowerCase();
+            boolean isPdf = lowerUrl.contains(".pdf");
 
             OCRProcessor ocrProcessor = new OCRProcessor();
             String extractedText;
 
-            if (suffix.equalsIgnoreCase(".pdf")) {
-                log.info("Запуск PDF OCR");
+            if (isPdf) {
+                log.info("Запуск PDF OCR для файла: {}", tempFile.getName());
                 extractedText = ocrProcessor.extractTextFromPdf(tempFile);
             } else {
-                log.info("Запуск Image OCR");
+                log.info("Запуск Image OCR для файла: {}", tempFile.getName());
                 extractedText = ocrProcessor.extractTextFromImage(tempFile);
             }
 
-            tempFile.delete();
+            if (tempFile.exists()) {
+                boolean deleted = tempFile.delete();
+                log.debug("Временный файл удален: {}", deleted);
+            }
 
             return extractedText;
 
@@ -97,33 +98,51 @@ public class OCRServiceImpl implements OCRService {
 
     @Override
     public void saveOCR(String fid, String text, String noteId) {
-        OCRModel ocrModel = new OCRModel(fid, text, noteId);
+        OCRModel ocrModel = new OCRModel(UUID.fromString(fid), text, UUID.fromString(noteId));
         repository.save(ocrModel);
     }
 
     @Override
     public OCRResponseDTO getOCR(String fid) {
-        Optional<OCRModel> model = repository.findById(fid);
-
-        return model.map(ocrModel -> new OCRResponseDTO(ocrModel.getFid(), ocrModel.getText())).orElse(null);
+        Optional<OCRModel> model = repository.findById(UUID.fromString(fid));
+        return model.map(ocrModel -> new OCRResponseDTO(ocrModel.getFid().toString(), ocrModel.getText())).orElse(null);
     }
 
-    private File downloadFromS3(String fileId) throws IOException {
+    private File downloadFromS3(String fileUrl) throws IOException {
         try {
+            java.net.URI uri = java.net.URI.create(fileUrl);
+            String path = uri.getPath();
+
+            String cleanPath = path.substring(1);
+            String s3Key = cleanPath.substring(cleanPath.indexOf("/") + 1);
+
             GetObjectRequest getRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
-                    .key(fileId)
+                    .key(s3Key)
                     .build();
 
-            Path tempFile = Files.createTempFile("ocr_download_", ".tmp");
+            Path tempFilePath = Files.createTempFile("ocr_", ".tmp");
 
-            s3Client.getObject(getRequest, tempFile);
+            Files.deleteIfExists(tempFilePath);
 
-            return tempFile.toFile();
+            s3Client.getObject(getRequest, ResponseTransformer.toFile(tempFilePath));
 
+            if (!Files.exists(tempFilePath) || Files.size(tempFilePath) == 0) {
+                throw new IOException("Скачанный файл пуст или не существует");
+            }
+
+            return tempFilePath.toFile();
+
+        } catch (S3Exception e) {
+            log.error("Ошибка S3 при скачивании файла. Статус: {}, Ошибка: {}",
+                    e.statusCode(), e.awsErrorDetails().errorMessage(), e);
+            throw new IOException("Ошибка при загрузке из S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (IOException e) {
+            log.error("IO-ошибка при загрузке: {}", e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
-            log.error("Failed to download file from S3: {}", fileId, e);
-            throw new IOException("S3 download failed", e);
+            log.error("Ошибка при загрузке файле", e);
+            throw new IOException("Ошибка при загрузке из S3", e);
         }
     }
 }
