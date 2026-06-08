@@ -5,7 +5,7 @@ RUN gradle shadowJar --no-daemon || gradle build --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /home/gradle/project/build/libs/ /app/libs/
+COPY --from=builder /home/gradle/project/build/libs/app-fat.jar /app/libs/
 
 CMD java -XX:MaxRAMPercentage=70 \
          -XX:MinRAMPercentage=50 \

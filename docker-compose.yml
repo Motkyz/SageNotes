@@ -79,10 +79,16 @@ services:
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
       REALM: ${REALM}
       QDRANT_COLLECTION: ${QDRANT_COLLECTION}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "8084:8080"
     depends_on:
-      - rabbitmq
+      - auth-service
+      - index-service
+      - elasticsearch
+      - qdrant
+      - redis
     restart: unless-stopped
 
   ai-gateway:

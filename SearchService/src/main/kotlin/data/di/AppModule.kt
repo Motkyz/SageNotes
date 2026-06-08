@@ -3,10 +3,10 @@ package ru.sagenotes.searchservice.data.di
 import co.elastic.clients.elasticsearch.ElasticsearchClient
 import co.elastic.clients.json.jackson.JacksonJsonpMapper
 import co.elastic.clients.transport.rest_client.RestClientTransport
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import org.apache.http.HttpHost
 import org.apache.http.auth.AuthScope
@@ -16,9 +16,14 @@ import org.elasticsearch.client.RestClient
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import redis.clients.jedis.DefaultJedisClientConfig
+import redis.clients.jedis.HostAndPort
+import redis.clients.jedis.RedisClient
 import ru.sagenotes.searchservice.data.config.ElasticsearchConfig
 import ru.sagenotes.searchservice.data.config.JwtConfig
 import ru.sagenotes.searchservice.data.config.QdrantConfig
+import ru.sagenotes.searchservice.data.config.RedisConfig
+import ru.sagenotes.searchservice.data.repository.CachedSearchRepositoryImpl
 import ru.sagenotes.searchservice.data.repository.SearchRepositoryImpl
 import ru.sagenotes.searchservice.data.service.ElasticsearchService
 import ru.sagenotes.searchservice.data.service.ElasticsearchServiceImpl
@@ -30,9 +35,15 @@ import ru.sagenotes.searchservice.domain.usecase.SearchUseCaseImpl
 
 val networkModule = module {
     single {
+        Json {
+            ignoreUnknownKeys = true
+        }
+    }
+
+    single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true })
+                json(get<Json>())
             }
         }
     }
@@ -42,6 +53,7 @@ val configModule = module {
     single { JwtConfig.fromEnv() }
     single { ElasticsearchConfig.fromEnv() }
     single { QdrantConfig.fromEnv() }
+    single { RedisConfig.fromEnv() }
 }
 
 val serviceModule = module {
@@ -72,7 +84,31 @@ val serviceModule = module {
 }
 
 val repositoryModule = module {
-    singleOf(::SearchRepositoryImpl) bind SearchRepository::class
+    single<RedisClient> {
+        val config = get<RedisConfig>()
+
+        val clientConfig = DefaultJedisClientConfig.builder()
+            .timeoutMillis(5000)
+            .apply {
+                password(config.password)
+            }
+            .build()
+
+        RedisClient.builder()
+            .hostAndPort(HostAndPort(config.host, config.port))
+            .clientConfig(clientConfig)
+            .build()
+    }
+
+    singleOf(::SearchRepositoryImpl)
+
+    single<SearchRepository> {
+        CachedSearchRepositoryImpl(
+            delegate = get<SearchRepositoryImpl>(),
+            redisClient = get(),
+            json = get()
+        )
+    }
 }
 
 val useCaseModule = module {

@@ -17,20 +17,16 @@ fun Application.configureSearchRouting() {
     routing {
         authenticate("auth-jwt") {
             post("/search") {
-                try {
-                    val query = call.request.queryParameters["q"]
-                        ?: return@post call.respond(HttpStatusCode.BadRequest, "Query parameter 'q' is required")
-                    val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+                val query = call.request.queryParameters["q"]
+                    ?: return@post call.respond(HttpStatusCode.BadRequest, "Query parameter 'q' is required")
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
 
-                    val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("sub")?.asString()
-                        ?: return@post call.respond(HttpStatusCode.Unauthorized)
+                val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("sub")?.asString()
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized)
 
-                    val response = searchUseCase(query, userId, limit).map { it.toPresentation() }
+                val response = searchUseCase(query, userId, limit).map { it.toPresentation() }
 
-                    call.respond(HttpStatusCode.OK, response)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, e.message ?: "Unknown error")
-                }
+                call.respond(HttpStatusCode.OK, response)
             }
         }
     }

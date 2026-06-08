@@ -11,6 +11,7 @@ fun Application.configureStatusPagePlugin() {
     install(StatusPages) {
         exception<Exception> { call, cause ->
             val message = cause.message ?: "Unknown error"
+            cause.printStackTrace()
             call.respond(HttpStatusCode.InternalServerError, ErrorResponse(message))
         }
     }

@@ -33,6 +33,8 @@ dependencies {
     implementation(ktorLibs.server.auth)
     implementation(ktorLibs.server.auth.jwt)
 
+    implementation("redis.clients:jedis:7.5.2")
+
     val koin = "4.1.1"
     implementation("io.insert-koin:koin-ktor:$koin")
 
