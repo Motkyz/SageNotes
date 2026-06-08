@@ -16,7 +16,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER}
+          issuer-uri: http://${KEYCLOAK_ISSUER}
           audience: ${KEYCLOAK_AUDIENCE}
   jackson:
     property-naming-strategy: SNAKE_CASE
