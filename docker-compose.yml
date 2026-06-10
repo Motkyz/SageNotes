@@ -169,12 +169,14 @@ services:
       KEYCLOAK_CERTS: ${KEYCLOAK_CERTS}
     ports:
       - "8087:8080"
+      - "9097:9090"
     depends_on:
       - temporal
       - seaweedfs
       - index-service
       - ocr-service
       - postgres_content
+      - auth-service
     restart: unless-stopped
 
   index-service:

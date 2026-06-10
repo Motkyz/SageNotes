@@ -9,8 +9,10 @@ class UpdateTagUseCase:
     async def execute(self, user_id: str, tag_id: str, data: TagUpdate):
         tag = await self.repository.get(tag_id)
         if not tag:
+            print("Tag not found")
             return None
 
         if str(tag.user_id) != user_id:
+            print("User not owner of the tag")
             return None
         return await self.repository.update(tag_id, data)

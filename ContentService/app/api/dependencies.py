@@ -16,7 +16,6 @@ from app.use_case.notes.update_note import UpdateNoteUseCase
 from app.use_case.tags.create_tag import CreateTagUseCase
 from app.use_case.tags.delete_tag import DeleteTagUseCase
 from app.use_case.tags.get_tag import GetTagUseCase
-from app.use_case.tags.get_tags import GetTagsUseCase
 from app.use_case.tags.get_tags_by_user_id import GetTagsByUserIdUseCase
 from app.use_case.tags.update_tag import UpdateTagUseCase
 

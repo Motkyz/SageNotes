@@ -11,6 +11,6 @@ class DeleteTagUseCase:
             return False
 
         if str(tag.user_id) != user_id:
-            raise Exception("User not authenticated")
+            raise Exception("User not owner of the tag")
 
         return await self.repository.delete(tag_id)
