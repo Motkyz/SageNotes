@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package files;
+
+import "google/protobuf/timestamp.proto";
+
+service FileService {
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+  rpc GetFileUrl(GetFileUrlRequest) returns (GetFileUrlResponse);
+  rpc GetNoteFiles(GetNoteFilesRequest) returns (GetNoteFilesResponse);
+}
+
+message File {
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string extension = 4;
+  string mime_type = 5;
+  int64 size = 6;
+  string note_id = 7;
+  string user_id = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message DeleteFileRequest {
+  string file_id = 1;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+}
+
+message GetFileUrlRequest {
+  string file_id = 1;
+}
+
+message GetFileUrlResponse {
+  string url = 1;
+}
+
+message GetNoteFilesRequest {
+  string note_id = 1;
+}
+
+message GetNoteFilesResponse {
+  repeated File files = 1;
+}

@@ -1,7 +1,7 @@
 import grpc
 
 from app.db import async_session
-from app.grpc.generated import tag_pb2_grpc, tag_pb2
+from app.grpc.generated.tag import tag_pb2, tag_pb2_grpc
 from app.grpc.grpc_auth import grpc_auth_service
 from app.repositories.tag_repository import TagRepository
 from app.schemas.tag_schemas import TagCreate, TagUpdate

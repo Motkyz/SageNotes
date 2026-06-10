@@ -1,7 +1,7 @@
 import grpc
 
 from app.db import async_session
-from app.grpc.generated import note_pb2_grpc, note_pb2
+from app.grpc.generated.note import note_pb2, note_pb2_grpc
 from app.grpc.grpc_auth import grpc_auth_service
 from app.repositories.note_repository import NoteRepository
 from app.schemas.note_schemas import NoteCreate, NoteUpdate
