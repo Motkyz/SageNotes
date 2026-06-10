@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package tags;
+
+import "google/protobuf/timestamp.proto";
+
+service TagService {
+  rpc GetTag(GetTagRequest) returns (GetTagResponse);
+  rpc GetUserTags(GetUserTagsRequest) returns (GetUserTagsResponse);
+  rpc CreateTag(CreateTagRequest) returns (CreateTagResponse);
+  rpc UpdateTag(UpdateTagRequest) returns (UpdateTagResponse);
+  rpc DeleteTag(DeleteTagRequest) returns (DeleteTagResponse);
+}
+
+message Tag {
+  string id = 1;
+  string title = 2;
+  string color = 3;
+  string user_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message GetTagRequest {
+  string user_id = 1;
+  string tag_id = 2;
+}
+
+message GetTagResponse {
+  Tag tag = 1;
+}
+
+message GetUserTagsRequest {
+  string user_id = 1;
+}
+
+message GetUserTagsResponse {
+  repeated Tag tags = 1;
+}
+
+message CreateTagRequest {
+  string user_id = 1;
+  string title = 2;
+  string color = 3;
+}
+
+message CreateTagResponse {
+  string tag_id = 1;
+}
+
+message UpdateTagRequest {
+  string user_id = 1;
+  string tag_id = 2;
+  optional string title = 3;
+  optional string color = 4;
+}
+
+message UpdateTagResponse {
+  string tag_id = 1;
+}
+
+message DeleteTagRequest {
+  string user_id = 1;
+  string tag_id = 2;
+}
+
+message DeleteTagResponse {
+  bool success = 1;
+}
