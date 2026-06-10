@@ -44,12 +44,12 @@ public class OCRgrpcController extends OcrGrpcServiceGrpc.OcrGrpcServiceImplBase
             mapFiles(responseObserver, dto);
 
         } catch (ResponseStatusException e) {
-            log.error("Нота не найдена через gRPC: {}", e.getMessage());
+            log.error("Заметка не найдена: {}", e.getMessage());
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription(e.getReason())
                     .asRuntimeException());
         } catch (AccessDeniedException e) {
-            log.error("Ошибка доступа через gRPC: {}", e.getMessage());
+            log.error("Ошибка доступа: {}", e.getMessage());
             responseObserver.onError(Status.PERMISSION_DENIED
                     .withDescription(e.getMessage())
                     .asRuntimeException());
@@ -88,14 +88,14 @@ public class OCRgrpcController extends OcrGrpcServiceGrpc.OcrGrpcServiceImplBase
             mapFiles(responseObserver, responseDto);
 
         } catch (AccessDeniedException e) {
-            log.error("Ошибка доступа при обработке OCR через gRPC: {}", e.getMessage());
+            log.error("Ошибка доступа при обработке OCR: {}", e.getMessage());
             responseObserver.onError(Status.PERMISSION_DENIED
                     .withDescription(e.getMessage())
                     .asRuntimeException());
         } catch (Exception e) {
-            log.error("Системная ошибка при обработке OCR через gRPC", e);
+            log.error("Системная ошибка при обработке OCR", e);
             responseObserver.onError(Status.INTERNAL
-                    .withDescription("Внутренняя ошибка сервера при распознавании текста")
+                    .withDescription("Ошибка сервера при распознавании текста")
                     .asRuntimeException());
         }
     }
