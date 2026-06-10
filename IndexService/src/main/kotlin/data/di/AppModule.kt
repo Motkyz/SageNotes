@@ -29,6 +29,8 @@ import ru.sagenotes.indexservice.data.utils.ChunkerImpl
 import ru.sagenotes.indexservice.domain.repository.IndexRepository
 import ru.sagenotes.indexservice.domain.usecase.IndexUseCase
 import ru.sagenotes.indexservice.domain.usecase.IndexUseCaseImpl
+import ru.sagenotes.indexservice.presentation.route.grpc.IndexGrpcService
+import ru.sagenotes.indexservice.presentation.route.grpc.interceptor.JwtAuthInterceptor
 
 val networkModule = module {
     single {
@@ -82,12 +84,18 @@ val useCaseModule = module {
     singleOf(::IndexUseCaseImpl) bind IndexUseCase::class
 }
 
+val grpcModule = module {
+    singleOf(::JwtAuthInterceptor)
+    singleOf(::IndexGrpcService)
+}
+
 val appModule = module {
     includes(
         networkModule,
         configModule,
         serviceModule,
         repositoryModule,
-        useCaseModule
+        useCaseModule,
+        grpcModule,
     )
 }
