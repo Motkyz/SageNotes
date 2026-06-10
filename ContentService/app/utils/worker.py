@@ -1,27 +1,24 @@
 import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
-import os
 
+# Импортируем наш конфиг
+from app.config import settingTemporal
 from activities import process_ocr_activity, index_document_activity
 from workflows import SaveNoteWorkflow
 
-
 async def main():
-    temporal_host = os.getenv("TEMPORAL_HOST")
-
-    client = await Client.connect(temporal_host)
+    client = await Client.connect(settingTemporal.TEMPORAL_HOST)
 
     worker = Worker(
         client,
-        task_queue="content-task-queue",
+        task_queue=settingTemporal.TEMPORAL_TASK_QUEUE,
         workflows=[SaveNoteWorkflow],
         activities=[process_ocr_activity, index_document_activity],
     )
 
-    print("Content Service Temporal Worker started...")
+    print(f"Content Service Temporal Worker started on {settingTemporal.TEMPORAL_HOST}...")
     await worker.run()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

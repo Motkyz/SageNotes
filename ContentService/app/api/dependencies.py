@@ -1,4 +1,5 @@
-from fastapi import Depends
+from fastapi import Depends, Request
+from temporalio.client import Client
 
 from app.db import async_session
 from app.repositories.note_repository import NoteRepository
@@ -117,3 +118,7 @@ def get_url_file_use_case(
         repository_for_notes=note_repository,
         repository_for_files=file_repository
     )
+
+
+async def get_temporal_client(request: Request) -> Client:
+    return getattr(request.app.state, "temporal_client")

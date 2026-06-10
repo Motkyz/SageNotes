@@ -64,3 +64,10 @@ class SettingKeycloak(BaseSettings):
 
 
 settingKeycloak = SettingKeycloak()
+
+
+class SettingTemporal(BaseSettings):
+    TEMPORAL_HOST: str
+    TEMPORAL_TASK_QUEUE: str = "content-task-queue"
+
+settingTemporal = SettingTemporal()

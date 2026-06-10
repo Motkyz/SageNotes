@@ -149,7 +149,7 @@ services:
   content-service:
     build: ./ContentService
     environment:
-      TEMPORAL_HOST: http://temporal:7233
+      TEMPORAL_HOST: temporal:7233
       POSTGRES_CONTENT_DB: ${POSTGRES_CONTENT_DB}
       POSTGRES_CONTENT_USER: ${POSTGRES_CONTENT_USER}
       POSTGRES_CONTENT_PASSWORD: ${POSTGRES_CONTENT_PASSWORD}

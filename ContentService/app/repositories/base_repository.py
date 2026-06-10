@@ -36,7 +36,7 @@ class BaseRepository(Generic[ModelT, CreateSchemaT, UpdateSchemaT]):
 
     async def get(self, item_id: str) -> ModelT | None:
         async with self._session() as session:
-            return await session.get(self.model_cls, UUID(item_id))
+            return await session.get(self.model_cls, UUID(str(item_id)))
 
     async def get_all(self) -> list[ModelT]:
         async with self._session() as session:

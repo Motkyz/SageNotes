@@ -12,6 +12,13 @@ import base64
 from app.config import settingKeycloak
 
 
+def extract_token(request: Request) -> str:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid or missing Authorization header")
+    return auth_header.split(" ")[1]
+
+
 def rsa_public_key_from_jwk(jwk: dict) -> str:
     n = base64.urlsafe_b64decode(jwk['n'] + '==')
     e = base64.urlsafe_b64decode(jwk['e'] + '==')
