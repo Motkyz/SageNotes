@@ -92,6 +92,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "8084:8080"
+      - "9094:9090"
     depends_on:
       - auth-service
       - index-service
