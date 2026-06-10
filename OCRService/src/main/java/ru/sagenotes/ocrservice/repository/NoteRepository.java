@@ -1,9 +1,9 @@
 package ru.sagenotes.ocrservice.repository;
 
 import org.springframework.data.repository.CrudRepository;
-import ru.sagenotes.ocrservice.model.OCRModel;
+import ru.sagenotes.ocrservice.model.NoteModel;
 
 import java.util.UUID;
 
-public interface OCRRepository extends CrudRepository<OCRModel, UUID> {
+public interface NoteRepository extends CrudRepository<NoteModel, UUID> {
 }

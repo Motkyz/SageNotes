@@ -223,6 +223,7 @@ services:
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
     ports:
       - "8089:8080"
+      - "9099:9090"
     depends_on:
       - postgres_ocr
       - temporal

@@ -3,13 +3,18 @@ package ru.sagenotes.ocrservice.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.sagenotes.ocrservice.dto.OCRRequestDTO;
 import ru.sagenotes.ocrservice.dto.OCRRequestListDTO;
 import ru.sagenotes.ocrservice.dto.OCRResponseDTO;
 import ru.sagenotes.ocrservice.dto.OCRResponseListDTO;
+import ru.sagenotes.ocrservice.model.NoteModel;
 import ru.sagenotes.ocrservice.model.OCRModel;
-import ru.sagenotes.ocrservice.repository.OCRRepository;
+import ru.sagenotes.ocrservice.repository.NoteRepository;
 import ru.sagenotes.ocrservice.service.OCRService;
 import ru.sagenotes.ocrservice.util.OCRProcessor;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
@@ -23,7 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -31,31 +35,38 @@ import java.util.UUID;
 @Slf4j
 public class OCRServiceImpl implements OCRService {
 
-    private final OCRRepository repository;
+    private final NoteRepository noteRepository;
     private final S3Client s3Client;
 
     @Value("${s3.bucket.name}")
     private String bucketName;
 
     @Override
-    public OCRResponseListDTO process(OCRRequestListDTO dto) {
+    @Transactional
+    public OCRResponseListDTO process(OCRRequestListDTO dto, String userId) {
         String noteId = dto.getNoteId();
         List<OCRResponseDTO> files = new ArrayList<>();
 
         for (OCRRequestDTO fileInfo : dto.getFiles()) {
+            File file = null;
             try {
                 String fid = fileInfo.getFid();
                 String url = fileInfo.getFileUrl();
 
-                File file = downloadFromS3(url);
+                file = downloadFromS3(url);
 
                 String extractedText = processFile(file, url);
                 OCRResponseDTO resp = new OCRResponseDTO(fid, extractedText);
 
-                saveOCR(fid, extractedText, noteId);
+                saveOCR(fid, extractedText, noteId, userId);
                 files.add(resp);
             } catch (Exception e) {
                 log.error("Ошибка при обработке файла в OCR сервисе: {}", e.getMessage(), e);
+            } finally {
+                if (file != null && file.exists()) {
+                    boolean deleted = file.delete();
+                    log.debug("Временный файл удален в finally: {}", deleted);
+                }
             }
         }
 
@@ -97,26 +108,41 @@ public class OCRServiceImpl implements OCRService {
     }
 
     @Override
-    public void saveOCR(String fid, String text, String noteId) {
-        OCRModel ocrModel = new OCRModel(UUID.fromString(fid), text, UUID.fromString(noteId));
-        repository.save(ocrModel);
+    @Transactional
+    public void saveOCR(String fid, String text, String noteId, String userId) {
+
+        NoteModel noteModel = noteRepository.findById(UUID.fromString(noteId))
+                .orElseGet(() -> new NoteModel(
+                        UUID.fromString(noteId),
+                        UUID.fromString(userId),
+                        new ArrayList<>()));
+
+        OCRModel ocrModel = new OCRModel(
+                UUID.fromString(fid),
+                text,
+                noteModel
+        );
+
+        noteModel.addOCR(ocrModel);
+        noteRepository.save(noteModel);
     }
 
     @Override
-    public OCRResponseListDTO getOCRbyNote(String noteId) {
-        List<OCRModel> models = repository.findAllByNoteId(UUID.fromString(noteId));
+    @Transactional(readOnly = true)
+    public OCRResponseListDTO getOCRbyNote(String noteId, String userId) {
 
-        List<OCRResponseDTO> files = models.stream()
+        NoteModel noteModel = noteRepository.findById(UUID.fromString(noteId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note not found"));
+
+        if (!noteModel.getOwnerId().equals(UUID.fromString(userId))) {
+            throw new AccessDeniedException("Пользователь не владелец заметки");
+        }
+
+        List<OCRResponseDTO> files = noteModel.getOcrs().stream()
                 .map(ocrModel -> new OCRResponseDTO(ocrModel.getFid().toString(), ocrModel.getText()))
                 .toList();
 
         return new OCRResponseListDTO(noteId, files);
-    }
-
-    @Override
-    public OCRResponseDTO getOCR(String fid) {
-        Optional<OCRModel> model = repository.findById(UUID.fromString(fid));
-        return model.map(ocrModel -> new OCRResponseDTO(ocrModel.getFid().toString(), ocrModel.getText())).orElse(null);
     }
 
     private File downloadFromS3(String fileUrl) throws IOException {

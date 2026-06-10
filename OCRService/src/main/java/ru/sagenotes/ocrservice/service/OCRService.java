@@ -6,8 +6,7 @@ import ru.sagenotes.ocrservice.dto.OCRResponseListDTO;
 
 public interface OCRService {
 
-    OCRResponseListDTO process(OCRRequestListDTO dto);
-    void saveOCR(String fid, String text, String noteId);
-    OCRResponseListDTO getOCRbyNote(String noteId);
-    OCRResponseDTO getOCR(String fid);
+    OCRResponseListDTO process(OCRRequestListDTO dto, String userId);
+    void saveOCR(String fid, String text, String noteId, String userId);
+    OCRResponseListDTO getOCRbyNote(String noteId, String userId);
 }
