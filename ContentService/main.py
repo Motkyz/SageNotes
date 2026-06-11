@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from temporalio.client import Client
 from temporalio.worker import Worker
 
@@ -51,6 +52,9 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="ContentService", lifespan=lifespan)
 app.include_router(main_router)
+
+instrumentator = Instrumentator().instrument(app)
+instrumentator.expose(app, endpoint="/metrics")
 
 if __name__ == "__main__":
     import uvicorn
