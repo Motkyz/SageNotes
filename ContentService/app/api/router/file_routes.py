@@ -3,11 +3,12 @@ from fastapi import Depends
 from temporalio.client import Client
 
 from app.api.dependencies import get_upload_file_use_case, get_url_file_use_case, get_delete_file_use_case, \
-    get_temporal_client
+    get_temporal_client, get_note_use_case
 from app.auth import get_current_user_id, keycloak_auth, extract_token
 from app.use_case.files.delete_file import DeleteFileUseCase
 from app.use_case.files.get_url_file import GetUrlFileUseCase
 from app.use_case.files.upload_file import UploadFileUseCase
+from app.use_case.notes.get_note import GetNoteUseCase
 
 from app.utils.workflows import SaveNoteWorkflow
 
@@ -23,6 +24,7 @@ async def upload_file(
         file: UploadFile = File(...),
         upload_use_case: UploadFileUseCase = Depends(get_upload_file_use_case),
         url_use_case: GetUrlFileUseCase = Depends(get_url_file_use_case),
+        note_use_case: GetNoteUseCase = Depends(get_note_use_case),
         temporal_client: Client = Depends(get_temporal_client)
 ):
     user_id = get_current_user_id(request)
@@ -48,16 +50,12 @@ async def upload_file(
         }
     ]
 
+    note = await note_use_case.execute(user_id=user_id, note_id=note_id)
     await temporal_client.start_workflow(
-        SaveNoteWorkflow.run,
-        id=f"file-workflow-{file_id}",
-        task_queue="content-task-queue",
-        args=[
-            note_id,
-            "",
-            files_payload,
-            token
-        ]
+        "SaveNoteWorkflow",
+        args=[note_id, note.content, files_payload, token, "grpc"],
+        id=f"note-workflow-{note_id}-{file_id}",
+        task_queue="content-task-queue"
     )
 
     return {

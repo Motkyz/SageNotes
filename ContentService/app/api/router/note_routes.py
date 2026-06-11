@@ -65,7 +65,7 @@ async def create_note(
         SaveNoteWorkflow.run,
         id=f"note-workflow-{note_id}",
         task_queue="content-task-queue",
-        args=[note_id, data.content, files_payload, token]
+        args=[note_id, data.content, files_payload, token, "rest"]
     )
 
     return {"note_id": note_id}

@@ -65,6 +65,7 @@ public class OCRgrpcController extends OcrGrpcServiceGrpc.OcrGrpcServiceImplBase
     @PreAuthorize("isAuthenticated()")
     public void processOcr(ProcessOcrRequest request, StreamObserver<OcrResponseList> responseObserver) {
         try {
+            log.info("Запуск OCR gRPC");
             Authentication authentication =
                     SecurityContextHolder.getContext().getAuthentication();
 

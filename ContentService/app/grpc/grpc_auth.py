@@ -136,4 +136,26 @@ class GrpcAuthService:
             )
             return None
 
+
+    async def extract_token(self, context: grpc.aio.ServicerContext) -> Optional[str]:
+        metadata = dict(context.invocation_metadata())
+        auth_header: Optional[str] = metadata.get("authorization")
+
+        if not auth_header:
+            await context.abort(
+                grpc.StatusCode.UNAUTHENTICATED,
+                "Missing authorization token"
+            )
+            return None
+
+        if not auth_header.startswith("Bearer "):
+            await context.abort(
+                grpc.StatusCode.UNAUTHENTICATED,
+                "Invalid authentication scheme. Use Bearer token."
+            )
+            return None
+
+        token = auth_header[7:]
+        return token
+
 grpc_auth_service = GrpcAuthService()

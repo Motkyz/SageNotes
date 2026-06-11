@@ -1,4 +1,5 @@
 import grpc
+from temporalio.client import Client
 
 from app.db import async_session
 from app.grpc.generated.note import note_pb2, note_pb2_grpc
@@ -11,18 +12,20 @@ from app.use_case.notes.delete_note import DeleteNoteUseCase
 from app.use_case.notes.get_note import GetNoteUseCase
 from app.use_case.notes.get_notes_by_user_id import GetNotesByUserIdUseCase
 from app.use_case.notes.update_note import UpdateNoteUseCase
+from app.utils.workflows import SaveNoteWorkflow
 
 
 class NoteGrpcService(
     note_pb2_grpc.NoteServiceServicer
 ):
-    def __init__(self):
+    def __init__(self, temporal_client: Client):
         repository = NoteRepository(session_factory=async_session)
         self.get_note_use_case = GetNoteUseCase(repository)
         self.get_notes_by_user_id_use_case = GetNotesByUserIdUseCase(repository)
         self.create_note_use_case = CreateNoteUseCase(repository)
         self.update_note_use_case = UpdateNoteUseCase(repository)
         self.delete_note_use_case = DeleteNoteUseCase(repository)
+        self.temporal_client = temporal_client
 
     def _tag_to_proto(self, tag) -> note_pb2.Tag:
         return note_pb2.Tag(
@@ -117,6 +120,17 @@ class NoteGrpcService(
         note_id = await self.create_note_use_case.execute(
             user_id=str(user_id),
             data=note_data
+        )
+
+        token = await grpc_auth_service.extract_token(context)
+
+        files_payload = []
+
+        await self.temporal_client.start_workflow(
+            SaveNoteWorkflow.run,
+            id=f"note-workflow-{note_id}",
+            task_queue="content-task-queue",
+            args=[note_id, note_data.content, files_payload, token, "grpc"]
         )
 
         return note_pb2.CreateNoteResponse(note_id=str(note_id))

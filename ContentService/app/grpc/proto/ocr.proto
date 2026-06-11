@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package ru.sagenotes.ocrservice;
+
+option java_multiple_files = true;
+option java_package = "ru.sagenotes.ocrservice.grpc";
+
+service OcrGrpcService {
+  rpc GetOcrByNote (OcrByNoteRequest) returns (OcrResponseList);
+
+  rpc ProcessOcr (ProcessOcrRequest) returns (OcrResponseList);
+}
+
+message OcrByNoteRequest {
+  string note_id = 1;
+}
+
+message OcrFileRequest {
+  string fid = 1;
+  string file_url = 2;
+}
+
+message ProcessOcrRequest {
+  string note_id = 1;
+  repeated OcrFileRequest files = 2;
+}
+
+message OcrFileResponse {
+  string fid = 1;
+  string text = 2;
+}
+
+message OcrResponseList {
+  string note_id = 1;
+  repeated OcrFileResponse files = 2;
+}
