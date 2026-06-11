@@ -15,7 +15,6 @@ class RabbitMQPublisher:
         self._exchange = None
 
     async def connect(self) -> None:
-        """Установить соединение с RabbitMQ."""
         self._connection = await aio_pika.connect_robust(
             f"amqp://{settings.rabbitmq_username}:{settings.rabbitmq_password}@"
             f"{settings.rabbitmq_host}:{settings.rabbitmq_port}/",
@@ -27,22 +26,10 @@ class RabbitMQPublisher:
             aio_pika.ExchangeType.TOPIC,
             durable=True,
         )
-        queue = await self._channel.declare_queue(
-             "notification.queue",
-             durable=True,
-        )
-        await queue.bind(self._exchange, routing_key=settings.summarize_routing_key)
 
-    async def publish_summary_completed(
-        self,
-        note_id: str,
-        summary: str,
-        user_id: str = "anonymous",
-    ) -> None:
-        """Отправить событие о завершении суммаризации."""
+    async def publish_summary_completed(self, note_id: str, summary: str, user_id: str = "anonymous") -> None:
         if not self._channel or self._channel.is_closed:
             await self.connect()
-
         assert self._exchange is not None
 
         payload = {
@@ -68,14 +55,40 @@ class RabbitMQPublisher:
             content_type="application/json",
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
+        await self._exchange.publish(message, routing_key=settings.summarize_routing_key)
 
-        await self._exchange.publish(
-            message,
-            routing_key=settings.summarize_routing_key,
+    async def publish_summary_failed(self, note_id: str, user_id: str, error: str) -> None:
+        """Отправить событие об ошибке суммаризации."""
+        if not self._channel or self._channel.is_closed:
+            await self.connect()
+        assert self._exchange is not None
+
+        payload = {
+            "version": "v1",
+            "event_type": "summarization.failed",
+            "author_id": "service:summarization-service",
+            "user_id": user_id,
+            "entity_id": str(uuid.uuid4()),
+            "entity_type": "summarization",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "meta": {
+                "title": "Ошибка суммаризации",
+                "description": f"Суммаризация для заметки {note_id} не выполнена",
+                "level": "ERROR",
+            },
+            "payload": {
+                "error": error,
+            },
+        }
+
+        message = aio_pika.Message(
+            body=json.dumps(payload, ensure_ascii=False).encode(),
+            content_type="application/json",
+            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
+        await self._exchange.publish(message, routing_key="summarize.failed")
 
     async def close(self) -> None:
-        """Закрыть соединение."""
         if self._channel and not self._channel.is_closed:
             await self._channel.close()
         if self._connection and not self._connection.is_closed:

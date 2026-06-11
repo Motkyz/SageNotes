@@ -1,14 +1,16 @@
 import requests
+from temporalio.client import Client
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
-from app.domain.use_cases import SummarizeNoteUseCase
-from app.presentation.dependencies import get_summarize_use_case, get_optional_user_id
+from app.presentation.dependencies import get_optional_user_id
 from app.presentation.schemas import SummarizeRequest, SummarizeResponse, TokenRequest, TokenResponse
 
 router = APIRouter(prefix="/summary", tags=["summary"])
 security = HTTPBearer(auto_error=False)
+
+TASK_QUEUE = "summarization-task-queue"
 
 
 @router.post("/auth/token", response_model=TokenResponse)
@@ -38,13 +40,17 @@ async def get_token(request: TokenRequest) -> TokenResponse:
 @router.post("/", response_model=SummarizeResponse)
 async def summarize_note(
     request: SummarizeRequest,
-    use_case: SummarizeNoteUseCase = Depends(get_summarize_use_case),
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
     user_id: str = Depends(get_optional_user_id),
 ) -> SummarizeResponse:
-    result = await use_case.execute(
-        note_id=request.note_id,
-        text=request.text,
-        user_id=user_id,
+    """Запуск Saga через Temporal."""
+    client = await Client.connect("temporal:7233", namespace="default")
+
+    result = await client.execute_workflow(
+        "SummarizationWorkflow",
+        args=[request.note_id, request.text, user_id],
+        id=f"summary-{request.note_id}",
+        task_queue=TASK_QUEUE,
     )
-    return SummarizeResponse(note_id=result.note_id, summary=result.summary)
+
+    return SummarizeResponse(note_id=result["note_id"], summary=result["summary"])
