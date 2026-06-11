@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(ktorLibs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "ru.sagenotes.indexservice"
@@ -14,6 +15,48 @@ application {
 kotlin {
     jvmToolchain(21)
 }
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.1"
+    }
+
+    plugins {
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.59.0"
+        }
+
+        create("grpckt") {
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.4.1:jdk8@jar"
+        }
+    }
+
+    generateProtoTasks {
+        all().forEach {
+            it.plugins {
+                create("grpc")
+                create("grpckt")
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir("src/main/kotlin/presentation/proto")
+        }
+        kotlin {
+            srcDirs(
+                "src/main/kotlin",
+                "build/generated/source/proto/main/kotlin",
+                "build/generated/source/proto/main/grpc",
+                "build/generated/source/proto/main/grpckt"
+            )
+        }
+    }
+}
+
 dependencies {
     implementation(ktorLibs.serialization.kotlinx.json)
     implementation(ktorLibs.server.config.yaml)

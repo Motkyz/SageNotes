@@ -1,0 +1,19 @@
+syntax = "proto3";
+package ru.sagenotes.index;
+
+option java_package = "ru.sagenotes.indexservice.grpc";
+option java_multiple_files = true;
+
+service IndexService {
+  rpc Index(IndexRequest) returns (IndexResponse);
+}
+
+message IndexRequest {
+  string note_id = 1;
+  string text = 2;
+}
+
+message IndexResponse {
+  bool success = 1;
+  string message = 2;
+}

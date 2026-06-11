@@ -61,8 +61,18 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VIRTUAL_HOST}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_CERTS: ${KEYCLOAK_CERTS}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      REALM: ${REALM}
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: 27017
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DATABASE: ${MONGO_DATABASE}
     ports:
       - "8083:8080"
+      - "9093:9090"
     depends_on:
       - rabbitmq
     restart: unless-stopped
@@ -83,6 +93,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
       - "8084:8080"
+      - "9094:9090"
     depends_on:
       - auth-service
       - index-service
@@ -199,6 +210,7 @@ services:
       QDRANT_COLLECTION: ${QDRANT_COLLECTION}
     ports:
       - "8088:8080"
+      - "9098:9090"
     depends_on:
       - qdrant
       - elasticsearch
@@ -349,6 +361,17 @@ services:
     ports:
       - "8888:8080"
 
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
 volumes:
   kc_data:
   temporal_data:
@@ -359,3 +382,4 @@ volumes:
   redis_data:
   qdrant_data:
   model_cache:
+  mongo_data:

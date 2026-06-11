@@ -1,0 +1,45 @@
+syntax = "proto3";
+package ru.sagenotes.notification;
+
+option java_package = "ru.sagenotes.notificationservice.grpc";
+option java_multiple_files = true;
+
+service NotificationService {
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+}
+
+enum NotificationLevel {
+  INFO = 0;
+  WARNING = 1;
+  ERROR = 2;
+  CRITICAL = 3;
+}
+
+enum NotificationStatus {
+  UNREAD = 0;
+  DELIVERED = 1;
+  READ = 2;
+}
+
+message SendNotificationRequest {
+  string version = 1;
+  string event_type = 2;
+  string user_id = 3;
+  string entity_id = 4;
+  string entity_type = 5;
+  string created_at = 6;
+  NotificationMeta meta = 7;
+  string payload = 8;
+  optional NotificationStatus status = 9;
+}
+
+message NotificationMeta {
+  string title = 1;
+  string description = 2;
+  NotificationLevel level = 3;
+}
+
+message SendNotificationResponse {
+  bool success = 1;
+  string message = 2;
+}

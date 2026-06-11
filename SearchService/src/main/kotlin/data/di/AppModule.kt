@@ -32,6 +32,8 @@ import ru.sagenotes.searchservice.data.service.QdrantServiceImpl
 import ru.sagenotes.searchservice.domain.repository.SearchRepository
 import ru.sagenotes.searchservice.domain.usecase.SearchUseCase
 import ru.sagenotes.searchservice.domain.usecase.SearchUseCaseImpl
+import ru.sagenotes.searchservice.presentation.route.grpc.SearchGrpcService
+import ru.sagenotes.searchservice.presentation.route.grpc.interceptor.JwtAuthInterceptor
 
 val networkModule = module {
     single {
@@ -115,12 +117,18 @@ val useCaseModule = module {
     singleOf(::SearchUseCaseImpl) bind SearchUseCase::class
 }
 
+val grpcModule = module {
+    singleOf(::JwtAuthInterceptor)
+    singleOf(::SearchGrpcService)
+}
+
 val appModule = module {
     includes(
         networkModule,
         configModule,
         serviceModule,
         repositoryModule,
-        useCaseModule
+        useCaseModule,
+        grpcModule
     )
 }

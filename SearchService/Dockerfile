@@ -1,4 +1,7 @@
 FROM gradle:9.1.0-jdk21-alpine AS builder
+
+RUN apk add --no-cache gcompat
+
 WORKDIR /home/gradle/project
 COPY . .
 RUN gradle shadowJar --no-daemon || gradle build --no-daemon
