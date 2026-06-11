@@ -36,6 +36,7 @@ dependencies {
     implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
     implementation("io.grpc:grpc-stub:1.62.2")
     implementation("io.grpc:grpc-protobuf:1.62.2")
+    implementation("io.micrometer:micrometer-core")
 
     compileOnly("org.projectlombok:lombok:1.18.46")
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
