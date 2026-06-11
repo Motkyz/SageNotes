@@ -30,17 +30,16 @@ class SearchGrpcService(
                         .setNoteId(result.noteId)
                         .setText(result.text)
                         .setScore(result.score)
-                        .setSource(mapToGrpcSource(result.source))
+                        .setSource(result.source.toGrpc())
                         .build()
                 }
             ).build()
     }
 
-    private fun mapToGrpcSource(searchSource: SearchSource): GrpcSearchSource {
-        return when (searchSource) {
+    private fun SearchSource.toGrpc(): GrpcSearchSource =
+        when (this) {
             SearchSource.ELASTICSEARCH -> GrpcSearchSource.ELASTICSEARCH
             SearchSource.QDRANT -> GrpcSearchSource.QDRANT
             SearchSource.HYBRID -> GrpcSearchSource.HYBRID
         }
-    }
 }
